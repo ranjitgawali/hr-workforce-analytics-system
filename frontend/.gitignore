@@ -1,0 +1,12 @@
+# Python / Flask
+venv/
+.venv/
+__pycache__/
+*.pyc
+.env
+
+# Node.js / React
+node_modules/
+dist/
+build/
+.DS_Store

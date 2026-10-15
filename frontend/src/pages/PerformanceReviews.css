@@ -1,0 +1,139 @@
+
+.reviews-page {
+  padding: 36px;
+  max-width: 1700px;
+  margin: 0 auto;
+}
+
+.reviews-header {
+  margin-bottom: 28px;
+}
+
+.reviews-header h1 {
+  font-size: 32px;
+  color: #111827;
+  margin: 0 0 8px;
+}
+
+.reviews-header p {
+  color: #6b7280;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.reviews-count {
+  display: inline-block;
+  margin-bottom: 22px;
+  padding: 10px 16px;
+  background: #dbeafe;
+  color: #1d4ed8;
+  border-radius: 9px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.reviews-table-container {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  overflow-x: auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.reviews-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.reviews-table thead {
+  background: #f8fafc;
+}
+
+.reviews-table th {
+  padding: 16px;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  border-bottom: 1px solid #e5e7eb;
+  white-space: nowrap;
+}
+
+.reviews-table td {
+  padding: 16px;
+  font-size: 13px;
+  color: #475569;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+
+.reviews-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.reviews-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+.review-employee-name {
+  color: #111827;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.review-employee-id {
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.review-rating {
+  color: #b45309;
+  background: #fef3c7;
+  padding: 6px 9px;
+  border-radius: 7px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.performance-badge {
+  display: inline-block;
+  padding: 6px 9px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.performance-excellent {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.performance-very-good {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.performance-good {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.review-comments {
+  min-width: 220px;
+  max-width: 300px;
+  line-height: 1.6;
+}
+
+@media (max-width: 768px) {
+  .reviews-page {
+    padding: 20px;
+  }
+
+  .reviews-header h1 {
+    font-size: 26px;
+  }
+}

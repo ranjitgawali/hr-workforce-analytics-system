@@ -1,0 +1,121 @@
+
+.payroll-page {
+  padding: 36px;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.payroll-header {
+  margin-bottom: 28px;
+}
+
+.payroll-header h1 {
+  font-size: 32px;
+  color: #111827;
+  margin: 0 0 8px;
+}
+
+.payroll-header p {
+  color: #6b7280;
+  margin: 0;
+}
+
+.payroll-count {
+  display: inline-block;
+  margin-bottom: 22px;
+  padding: 10px 16px;
+  background: #dbeafe;
+  color: #1d4ed8;
+  border-radius: 9px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.payroll-table-container {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  overflow-x: auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.payroll-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.payroll-table thead {
+  background: #f8fafc;
+}
+
+.payroll-table th {
+  padding: 17px 18px;
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  border-bottom: 1px solid #e5e7eb;
+  white-space: nowrap;
+}
+
+.payroll-table td {
+  padding: 16px 18px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #475569;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.payroll-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.payroll-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+.payroll-employee-name {
+  color: #111827;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.payroll-employee-id {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.payroll-net-salary {
+  color: #15803d;
+  font-weight: 700;
+}
+
+.payroll-status {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.payroll-status-paid {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.payroll-status-pending {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+@media (max-width: 600px) {
+  .payroll-page {
+    padding: 20px;
+  }
+
+  .payroll-header h1 {
+    font-size: 26px;
+  }
+}
