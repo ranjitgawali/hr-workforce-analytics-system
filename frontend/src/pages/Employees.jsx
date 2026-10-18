@@ -597,7 +597,7 @@ function Employees() {
                 </td>
 
                 <td>{employee.email}</td>
-                <td>{employee.designation}</td>
+                <td>{employee.job_role}</td>
                 <td>
                   <span className="department-badge">
                     {employee.department_name}

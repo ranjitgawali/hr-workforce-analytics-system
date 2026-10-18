@@ -38,18 +38,30 @@ def home():
 def get_employees():
     try:
         conn = get_db_connection()
-        cursor = conn.cursor()
+        
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
+        
         query = """
-            SELECT e.*, d.department_name 
+            SELECT e.employee_id, e.first_name, e.last_name, e.email, 
+                   e.job_role, 
+                   e.salary, e.department_id, d.department_name 
             FROM employees e 
             LEFT JOIN departments d ON e.department_id = d.department_id
             ORDER BY e.employee_id ASC;
         """
+        
         cursor.execute(query)
         employees = cursor.fetchall()
+        
+        # प्रत्येक employee मध्ये 'designation' ही नवीन की जोडून त्यात job_role ची व्हॅल्यू टाकू
+        for emp in employees:
+            emp['designation'] = emp.get('job_role')
+
         cursor.close()
         conn.close()
+        
         return jsonify(employees), 200
+        
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
