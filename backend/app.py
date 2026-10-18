@@ -53,7 +53,7 @@ def get_employees():
         cursor.execute(query)
         employees = cursor.fetchall()
         
-        # प्रत्येक employee मध्ये 'designation' ही नवीन की जोडून त्यात job_role ची व्हॅल्यू टाकू
+        # Map job_role to designation key for frontend compatibility
         for emp in employees:
             emp['designation'] = emp.get('job_role')
 
