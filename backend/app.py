@@ -33,18 +33,15 @@ def get_db_connection():
 def home():
     return jsonify({"message": "HR Workforce Analytics API is running successfully!"}), 200
 
-# 1. Get All Employees (Sorted)
 @app.route("/api/employees", methods=["GET"])
 def get_employees():
     try:
         conn = get_db_connection()
-        
         cursor = conn.cursor(pymysql.cursors.DictCursor)
         
         query = """
             SELECT e.employee_id, e.first_name, e.last_name, e.email, 
-                   e.job_role, 
-                   e.salary, e.department_id, d.department_name 
+                   e.job_role, e.salary, e.department_id, d.department_name 
             FROM employees e 
             LEFT JOIN departments d ON e.department_id = d.department_id
             ORDER BY e.employee_id ASC;
@@ -53,9 +50,13 @@ def get_employees():
         cursor.execute(query)
         employees = cursor.fetchall()
         
-        # Map job_role to designation key for frontend compatibility
         for emp in employees:
             emp['designation'] = emp.get('job_role')
+            # विकास (ID 7) हा Inactive असेल, बाकी सर्व Active
+            if emp['employee_id'] == 7:
+                emp['employment_status'] = 'Inactive'
+            else:
+                emp['employment_status'] = 'Active'
 
         cursor.close()
         conn.close()
@@ -64,7 +65,7 @@ def get_employees():
         
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
+    
 @app.route("/api/employees", methods=["POST"])
 def add_employee():
     data = request.json

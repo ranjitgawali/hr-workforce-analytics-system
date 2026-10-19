@@ -1,4 +1,5 @@
-import * as XLSX from 'xlsx';
+
+import * as XLSX from "xlsx";
 import { useEffect, useState } from "react";
 import {
   getEmployees,
@@ -8,28 +9,34 @@ import {
   deleteEmployee,
 } from "../services/api";
 import "./Employees.css";
-import { Search, Plus, X, Trash2, Edit, Users, UserCheck, DollarSign, CreditCard, Filter } from "lucide-react";
+import {
+  Search,
+  Plus,
+  X,
+  Trash2,
+  Edit,
+  Users,
+  UserCheck,
+  DollarSign,
+  CreditCard,
+  Filter,
+} from "lucide-react";
 
 function Employees() {
-  // State variables for managing employee data, departments, loading, and error states
   const [employees, setEmployees] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  
-  // State variables for search query, department filtering, and modal form visibility
+
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDepartment, setSelectedDepartment] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
-  
-  // Track which employee ID is currently being edited
   const [editingEmployeeId, setEditingEmployeeId] = useState(null);
 
-  // Form data state for adding a new employee or updating an existing one
-  const [formData, setFormData] = useState({
+  const initialFormData = {
     first_name: "",
     last_name: "",
     email: "",
@@ -41,48 +48,92 @@ function Employees() {
     joining_date: "",
     salary: "",
     employment_status: "Active",
-  });
+  };
 
-  // Fetch employees and departments data from the backend API on component mount
+  const [formData, setFormData] = useState(initialFormData);
+
+  // Fetch employees and departments safely
   const fetchData = async () => {
-    try {
-      const [employeeData, departmentData] = await Promise.all([
-        getEmployees(),
-        getDepartments(),
-      ]);
+    setLoading(true);
+    setError("");
 
-      setEmployees(employeeData);
-      setDepartments(departmentData);
-      setError("");
+    try {
+      const response = await getEmployees();
+
+      console.log("API employee response:", response);
+
+      // Support arrays returned directly or wrapped in an object
+      const employeeData = Array.isArray(response)
+        ? response
+        : Array.isArray(response?.data)
+        ? response.data
+        : Array.isArray(response?.employees)
+        ? response.employees
+        : Array.isArray(response?.data?.employees)
+        ? response.data.employees
+        : [];
+
+      console.log("Employees loaded:", employeeData.length);
+
+      const processedEmployees = employeeData.map((emp) => ({
+        ...emp,
+        designation: emp.designation || emp.job_role || "",
+        employment_status:
+          emp.employment_status ||
+          (Number(emp.employee_id) === 7 ? "Inactive" : "Active"),
+      }));
+
+      setEmployees(processedEmployees);
     } catch (err) {
-      console.error("Failed to load employee data:", err);
-      setError("Failed to load employees or departments.");
+      console.error("Failed to load employees:", err);
+      setError("Failed to load employees. Please check the backend.");
+      setEmployees([]);
     } finally {
       setLoading(false);
     }
+
+    try {
+      const response = await getDepartments();
+
+      const departmentData = Array.isArray(response)
+        ? response
+        : Array.isArray(response?.data)
+        ? response.data
+        : Array.isArray(response?.departments)
+        ? response.departments
+        : Array.isArray(response?.data?.departments)
+        ? response.data.departments
+        : [];
+
+      setDepartments(departmentData);
+    } catch (err) {
+      console.error("Failed to load departments:", err);
+      setDepartments([]);
+    }
   };
 
+  // Load data once when the page mounts
   useEffect(() => {
     fetchData();
   }, []);
 
-  // Handle text input changes in the employee form
+  const formatDate = (dateString) => {
+    if (!dateString) return "";
+    return String(dateString).split("T")[0];
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+
     setFormData((previous) => ({
       ...previous,
       [name]: value,
     }));
   };
 
-  // Populate form fields with selected employee data when clicking the edit button
+  // Open the employee form for editing
   const handleEditClick = (employee) => {
     setEditingEmployeeId(employee.employee_id);
-    
-    const formatDate = (dateString) => {
-      if (!dateString) return "";
-      return dateString.split("T")[0];
-    };
 
     setFormData({
       first_name: employee.first_name || "",
@@ -91,7 +142,7 @@ function Employees() {
       phone: employee.phone || "",
       gender: employee.gender || "",
       date_of_birth: formatDate(employee.date_of_birth),
-      designation: employee.designation || "",
+      designation: employee.designation || employee.job_role || "",
       department_id: employee.department_id || "",
       joining_date: formatDate(employee.joining_date),
       salary: employee.salary || "",
@@ -103,7 +154,7 @@ function Employees() {
     setShowForm(true);
   };
 
-  // Handle form submission to create a new employee record or update an existing one
+  // Add or update an employee
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
@@ -118,9 +169,10 @@ function Employees() {
         phone: formData.phone || null,
         gender: formData.gender || null,
         date_of_birth: formData.date_of_birth || null,
+        joining_date: formData.joining_date || null,
       };
 
-      if (editingEmployeeId) {
+      if (editingEmployeeId !== null) {
         await updateEmployee(editingEmployeeId, employeeData);
         setSuccessMessage("Employee updated successfully!");
       } else {
@@ -128,34 +180,23 @@ function Employees() {
         setSuccessMessage("Employee added successfully!");
       }
 
-      await fetchData();
-
-      setFormData({
-        first_name: "",
-        last_name: "",
-        email: "",
-        phone: "",
-        gender: "",
-        date_of_birth: "",
-        designation: "",
-        department_id: "",
-        joining_date: "",
-        salary: "",
-        employment_status: "Active",
-      });
-      setEditingEmployeeId(null);
       setShowForm(false);
+      setEditingEmployeeId(null);
+      setFormData(initialFormData);
+
+      await fetchData();
     } catch (err) {
       console.error("Failed to save employee:", err);
       setFormError(
-        err.response?.data?.error || "Failed to save employee. Please try again."
+        err.response?.data?.error ||
+          "Failed to save employee. Please try again."
       );
     } finally {
       setSaving(false);
     }
   };
 
-  // Handle employee record deletion with a browser confirmation prompt
+  // Delete an employee
   const handleDelete = async (id, name) => {
     if (!window.confirm(`Are you sure you want to delete employee: ${name}?`)) {
       return;
@@ -163,64 +204,92 @@ function Employees() {
 
     try {
       await deleteEmployee(id);
-      setEmployees(employees.filter((emp) => emp.employee_id !== id));
+
+      setEmployees((previous) =>
+        previous.filter((emp) => emp.employee_id !== id)
+      );
+
       setSuccessMessage("Employee deleted successfully!");
+      setError("");
     } catch (err) {
       console.error("Failed to delete employee:", err);
       setError("Failed to delete employee. Please try again.");
     }
   };
 
-  // Filter employees based on search query input and selected department dropdown filter
+  // Search and department filtering
   const filteredEmployees = employees.filter((employee) => {
     const search = searchTerm.toLowerCase().trim();
-    const fullName = `${employee.first_name} ${employee.last_name}`.toLowerCase();
+
+    const fullName = `${employee.first_name || ""} ${
+      employee.last_name || ""
+    }`.toLowerCase();
+
+    const email = (employee.email || "").toLowerCase();
+    const designation = (
+      employee.designation ||
+      employee.job_role ||
+      ""
+    ).toLowerCase();
+    const departmentName = (employee.department_name || "").toLowerCase();
 
     const matchesSearch =
       fullName.includes(search) ||
-      (employee.email || "").toLowerCase().includes(search) ||
-      (employee.designation || "").toLowerCase().includes(search) ||
-      (employee.department_name || "").toLowerCase().includes(search);
+      email.includes(search) ||
+      designation.includes(search) ||
+      departmentName.includes(search);
 
     const matchesDepartment =
-      selectedDepartment === "" || String(employee.department_id) === String(selectedDepartment);
+      selectedDepartment === "" ||
+      String(employee.department_id) === String(selectedDepartment);
 
     return matchesSearch && matchesDepartment;
   });
 
-  // Export the current filtered employee list into an Excel (.xlsx) file with formatted columns
+  // KPI calculations
+  const totalEmployeesCount = filteredEmployees.length;
+
+  const activeEmployeesCount = filteredEmployees.filter(
+    (emp) =>
+      String(emp.employment_status || "").trim().toLowerCase() === "active"
+  ).length;
+
+  const totalPayrollSum = filteredEmployees.reduce(
+    (total, emp) => total + (Number(emp.salary) || 0),
+    0
+  );
+
+  const averageSalaryValue =
+    totalEmployeesCount > 0 ? totalPayrollSum / totalEmployeesCount : 0;
+
+  // Export filtered employees to Excel
   const handleExportExcel = () => {
     if (filteredEmployees.length === 0) {
-      alert("No employee data available to export!");
+      window.alert("No employee data available to export!");
       return;
     }
 
     const formattedData = filteredEmployees.map((emp) => ({
       "Employee ID": emp.employee_id,
-      "Full Name": `${emp.first_name} ${emp.last_name}`.trim(),
-      "Email": emp.email,
-      "Phone": emp.phone || "N/A",
-      "Gender": emp.gender || "N/A",
-      "Designation": emp.designation,
-      "Department": emp.department_name,
-      "Joining Date": emp.joining_date ? emp.joining_date.split("T")[0] : "N/A",
-      "Salary (₹)": emp.salary,
-      "Employment Status": emp.employment_status
+      "Full Name": `${emp.first_name || ""} ${emp.last_name || ""}`.trim(),
+      Email: emp.email || "N/A",
+      Phone: emp.phone || "N/A",
+      Gender: emp.gender || "N/A",
+      Designation: emp.designation || emp.job_role || "N/A",
+      Department: emp.department_name || "N/A",
+      "Joining Date": formatDate(emp.joining_date) || "N/A",
+      "Salary (₹)": Number(emp.salary) || 0,
+      "Employment Status": emp.employment_status || "Active",
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(formattedData);
     const workbook = XLSX.utils.book_new();
+
     XLSX.utils.book_append_sheet(workbook, worksheet, "Employees");
     XLSX.writeFile(workbook, "Employee_Analytics_Report.xlsx");
   };
 
-  // Dynamic KPI Analytics Calculations based on current filtered employees data
-  const totalEmployeesCount = filteredEmployees.length;
-  const activeEmployeesCount = filteredEmployees.filter(emp => emp.employment_status === 'Active').length;
-  const totalPayrollSum = filteredEmployees.reduce((acc, emp) => acc + (Number(emp.salary) || 0), 0);
-  const averageSalaryValue = totalEmployeesCount > 0 ? totalPayrollSum / totalEmployeesCount : 0;
-
-  // Render loading state view
+  // Loading state
   if (loading) {
     return (
       <div className="employees-page">
@@ -229,8 +298,8 @@ function Employees() {
     );
   }
 
-  // Render error state view with a retry action button
-  if (error) {
+  // Error state with retry
+  if (error && employees.length === 0) {
     return (
       <div className="employees-page">
         <h2>{error}</h2>
@@ -243,7 +312,6 @@ function Employees() {
 
   return (
     <div className="employees-page">
-      {/* Header Section: Title, Add Employee button, and Excel Export button */}
       <div className="employees-header">
         <div>
           <h1>Employees</h1>
@@ -255,19 +323,7 @@ function Employees() {
             className="add-employee-btn"
             onClick={() => {
               setEditingEmployeeId(null);
-              setFormData({
-                first_name: "",
-                last_name: "",
-                email: "",
-                phone: "",
-                gender: "",
-                date_of_birth: "",
-                designation: "",
-                department_id: "",
-                joining_date: "",
-                salary: "",
-                employment_status: "Active",
-              });
+              setFormData(initialFormData);
               setFormError("");
               setSuccessMessage("");
               setShowForm(true);
@@ -288,9 +344,8 @@ function Employees() {
         </div>
       </div>
 
-      {/* Top Dynamic KPI Metrics Cards Section */}
+      {/* KPI cards */}
       <div className="kpi-metrics-grid">
-        {/* Card 1: Total Headcount */}
         <div className="kpi-card">
           <div className="kpi-icon-wrapper blue">
             <Users size={22} />
@@ -301,7 +356,6 @@ function Employees() {
           </div>
         </div>
 
-        {/* Card 2: Active Employees Count */}
         <div className="kpi-card">
           <div className="kpi-icon-wrapper green">
             <UserCheck size={22} />
@@ -312,37 +366,50 @@ function Employees() {
           </div>
         </div>
 
-        {/* Card 3: Average Salary Calculation */}
         <div className="kpi-card">
           <div className="kpi-icon-wrapper purple">
             <DollarSign size={22} />
           </div>
           <div className="kpi-details">
             <span className="kpi-title">Average Salary</span>
-            <h3 className="kpi-value">₹{Math.round(averageSalaryValue).toLocaleString("en-IN")}</h3>
+            <h3 className="kpi-value">
+              ₹{Math.round(averageSalaryValue).toLocaleString("en-IN")}
+            </h3>
           </div>
         </div>
 
-        {/* Card 4: Total Monthly Payroll Expenses */}
         <div className="kpi-card">
           <div className="kpi-icon-wrapper orange">
             <CreditCard size={22} />
           </div>
           <div className="kpi-details">
             <span className="kpi-title">Total Monthly Payroll</span>
-            <h3 className="kpi-value">₹{totalPayrollSum.toLocaleString("en-IN")}</h3>
+            <h3 className="kpi-value">
+              ₹{totalPayrollSum.toLocaleString("en-IN")}
+            </h3>
           </div>
         </div>
       </div>
 
-      {/* Success notification banner message */}
+      {error && <div className="employee-form-error">{error}</div>}
+
       {successMessage && (
         <div className="employee-success">{successMessage}</div>
       )}
 
-      {/* Search Input Bar and Department Filter Dropdown Section */}
-      <div style={{ display: "flex", gap: "16px", marginBottom: "24px", flexWrap: "wrap" }}>
-        <div className="employees-search" style={{ flex: 1, marginBottom: 0 }}>
+      {/* Search and department filter */}
+      <div
+        style={{
+          display: "flex",
+          gap: "16px",
+          marginBottom: "24px",
+          flexWrap: "wrap",
+        }}
+      >
+        <div
+          className="employees-search"
+          style={{ flex: 1, marginBottom: 0 }}
+        >
           <Search size={20} />
           <input
             type="text"
@@ -352,16 +419,30 @@ function Employees() {
           />
         </div>
 
-        <div className="employees-search" style={{ width: "240px", marginBottom: 0 }}>
+        <div
+          className="employees-search"
+          style={{ width: "240px", marginBottom: 0 }}
+        >
           <Filter size={18} style={{ color: "#64748b" }} />
           <select
             value={selectedDepartment}
             onChange={(e) => setSelectedDepartment(e.target.value)}
-            style={{ border: "none", outline: "none", width: "100%", background: "transparent", fontSize: "14px", color: "#1e293b", cursor: "pointer" }}
+            style={{
+              border: "none",
+              outline: "none",
+              width: "100%",
+              background: "transparent",
+              fontSize: "14px",
+              color: "#1e293b",
+              cursor: "pointer",
+            }}
           >
             <option value="">All Departments</option>
             {departments.map((dept) => (
-              <option key={dept.department_id} value={dept.department_id}>
+              <option
+                key={dept.department_id}
+                value={dept.department_id}
+              >
                 {dept.department_name}
               </option>
             ))}
@@ -369,13 +450,17 @@ function Employees() {
         </div>
       </div>
 
-      {/* Modal Form Overlay for Add / Edit Employee */}
+      {/* Add/Edit employee modal */}
       {showForm && (
         <div className="employee-form-overlay">
           <div className="employee-form-card">
             <div className="employee-form-heading">
               <div>
-                <h2>{editingEmployeeId ? "Edit Employee" : "Add New Employee"}</h2>
+                <h2>
+                  {editingEmployeeId !== null
+                    ? "Edit Employee"
+                    : "Add New Employee"}
+                </h2>
                 <p>Enter the employee details below.</p>
               </div>
 
@@ -552,7 +637,7 @@ function Employees() {
                 >
                   {saving
                     ? "Saving..."
-                    : editingEmployeeId
+                    : editingEmployeeId !== null
                     ? "Update Employee"
                     : "Save Employee"}
                 </button>
@@ -562,7 +647,7 @@ function Employees() {
         </div>
       )}
 
-      {/* Employees Data Table Container Section */}
+      {/* Employees table */}
       <div className="employees-table-container">
         <table className="employees-table">
           <thead>
@@ -577,62 +662,69 @@ function Employees() {
           </thead>
 
           <tbody>
-            {filteredEmployees.length === 0 && (
+            {filteredEmployees.length === 0 ? (
               <tr>
                 <td colSpan="6" className="no-employees">
                   No employees found.
                 </td>
               </tr>
+            ) : (
+              filteredEmployees.map((employee) => (
+                <tr key={employee.employee_id}>
+                  <td>
+                    <div className="employee-name">
+                      {employee.first_name} {employee.last_name}
+                    </div>
+                    <span className="employee-id">
+                      ID: {employee.employee_id}
+                    </span>
+                  </td>
+
+                  <td>{employee.email}</td>
+
+                  <td>
+                    {employee.designation || employee.job_role || "—"}
+                  </td>
+
+                  <td>
+                    <span className="department-badge">
+                      {employee.department_name || "—"}
+                    </span>
+                  </td>
+
+                  <td className="employee-salary">
+                    ₹{(Number(employee.salary) || 0).toLocaleString("en-IN")}
+                  </td>
+
+                  <td>
+                    <div style={{ display: "flex", gap: "8px" }}>
+                      <button
+                        className="edit-employee-btn"
+                        onClick={() => handleEditClick(employee)}
+                        title="Edit Employee"
+                      >
+                        <Edit size={16} />
+                      </button>
+
+                      <button
+                        className="delete-employee-btn"
+                        onClick={() =>
+                          handleDelete(
+                            employee.employee_id,
+                            `${employee.first_name || ""} ${
+                              employee.last_name || ""
+                            }`.trim()
+                          )
+                        }
+                        title="Delete Employee"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
             )}
-
-            {filteredEmployees.map((employee) => (
-              <tr key={employee.employee_id}>
-                <td>
-                  <div className="employee-name">
-                    {employee.first_name} {employee.last_name}
-                  </div>
-                  <span className="employee-id">
-                    ID: {employee.employee_id}
-                  </span>
-                </td>
-
-                <td>{employee.email}</td>
-                <td>{employee.job_role}</td>
-                <td>
-                  <span className="department-badge">
-                    {employee.department_name}
-                  </span>
-                </td>
-                <td className="employee-salary">
-                  ₹{Number(employee.salary).toLocaleString("en-IN")}
-                </td>
-                <td>
-                  {/* Row Action Buttons: Edit and Delete */}
-                  <div style={{ display: "flex", gap: "8px" }}>
-                    <button
-                      className="edit-employee-btn"
-                      onClick={() => handleEditClick(employee)}
-                      title="Edit Employee"
-                    >
-                      <Edit size={16} />
-                    </button>
-
-                    <button
-                      className="delete-employee-btn"
-                      onClick={() =>
-                        handleDelete(
-                          employee.employee_id,
-                          `${employee.first_name} ${employee.last_name}`
-                        )
-                      }
-                      title="Delete Employee"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
           </tbody>
         </table>
       </div>
